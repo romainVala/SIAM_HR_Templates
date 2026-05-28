@@ -7,8 +7,7 @@ We’ll keep improving these labels and hopefully add new ones over time, may be
 
 # Template version 1 : 
 
- [Download](https://zenodo.org/records/20399109/files/siam_label_tempate_v1.tar.gz?download=1) 
-
+ [Download](https://zenodo.org/records/20428684/files/siam_label_template.tar.gz?download=1)
 This version brings together four datasets, each with different labeling schemes at 0.25 mm³ resolution.
 We also provide mappings to get consistent tissue labels across all datasets.
 
@@ -32,7 +31,7 @@ If usefull, please cite
 > _SIAM : Head and Brain MRI Segmentation from Few High-Quality Templates via Synthetic Training._
 > ArXiv. [https://arxiv.org/abs/2605.02737)
 
-
+# Generative 
 The full generative pipeline used for SIAM will be hosted elsewere as it is an other topic: data (and label) augmentations 
 
 We will post here only minimal example for simple generative based on torchio.
