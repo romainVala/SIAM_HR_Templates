@@ -5,17 +5,16 @@ This repo collects data and information on head and brain label templates used t
 We’ll keep improving these labels and hopefully add new ones over time, may be with your help ...
 
 
-- **Template version 1 :** 
+# Template version 1 : 
+
  [Download](https://zenodo.org/records/20399109/files/siam_label_tempate_v1.tar.gz?download=1) 
 
 This version brings together four datasets, each with different labeling schemes at 0.25 mm³ resolution.
-
 We also provide mappings to get consistent tissue labels across all datasets.
 
 
 - **MIDA**: 1 subject -> 2 volumes. 
 Based on the original (slightly corrected) template.
-
 We also built a version with larger ventricles by non-linear registration to an older subject to insert its ventricule.
 
 - **skull**: 3 subjects -> 5 volumes. 
