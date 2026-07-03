@@ -295,48 +295,71 @@ def get_target_remaping(modelname, add_WM_ANO=False, add_ANO=False):
     #print(label_dic)
     return dic_map_tissue, dic_map_target, label_dic, label_dic_all, preprocessing_target_map_name, preprocessing_target_map_to_synth
 
+def get_all_possible_suj():
+    return ['vasc1', 'vasc2', 'vasc3', 'vasc4', 'skull1', 'skull2', 'skull3', 'skull4', 'skull5',
+               'mida1', 'mida2', 'allen']
+
+
 def get_siam_data(modelname):
     siam_data = get_siam_data_dir()
     dir_subregion,subregions_lab_list = None,[]
+    flab = None
 
     if 'vasc1' in modelname:
         flab = os.path.join(siam_data, 'vascular', 'Svas_03', 'r025s05_SynthVas_03_V4.nii.gz')
     if 'vasc2' in modelname:
         flab = os.path.join(siam_data, 'vascular', 'Svas_03', 'r025s05_SynthVas_03_V4_Dill.nii.gz')
     if 'vasc3' in modelname:
-        flab = os.path.join(siam_data, 'vascular', 'Svas_04', 'r025s05_SynthVas_03_V4.nii.gz')
+        flab = os.path.join(siam_data, 'vascular', 'Svas_04', 'r025s05_Synth_Vas_04_v4.nii.gz')
     if 'vasc4' in modelname:
         flab = os.path.join(siam_data, 'vascular', 'Svas_04', 'r025s05_Synth_Vas_04_v4_VentDill.nii.gz')
 
-    if 'vasc' in modelname:
+    if ('vasc1' in modelname) | ('vasc2' in modelname):
         dir_subregion = os.path.join(siam_data, 'vascular', 'Svas_03', 'subregions_labels')
+        subregions_lab_list = ['WMregion','cerGM*cereb','WMCereb*_cereb','hip','Thal*[Yy]eb','Caud*[Yy]eb','Put*[Yy]eb','Pal*[Yy]eb','STN*[Yy]eb','gm']
+
+    if ('vasc3' in modelname) | ('vasc4' in modelname):
+        dir_subregion = os.path.join(siam_data, 'vascular', 'Svas_04', 'subregions_labels')
         subregions_lab_list = ['WMregion','cerGM*cereb','WMCereb*_cereb','hip','Thal*[Yy]eb','Caud*[Yy]eb','Put*[Yy]eb','Pal*[Yy]eb','STN*[Yy]eb','gm']
 
     if 'skull1' in modelname:
         flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PVdown_GM__head_U_006_midaV4s05.nii.gz')
     if 'skull2' in modelname:
-        flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PVdown_GM__head_U_013_midaV4s05.nii.gz')
-    if 'skull3' in modelname:
         flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PV_down_up_head_U_006_midaV4s05.nii.gz')
+    if 'skull3' in modelname:
+        flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PVdown_GM__head_U_013_midaV4s05.nii.gz')
     if 'skull4' in modelname:
-        flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PV_down_up_head_U_010_midaV4s05.nii.gz')
-    if 'skull5' in modelname:
         flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PV_down_up_head_U_013_midaV4s05.nii.gz')
+    if 'skull5' in modelname:
+        flab = os.path.join(siam_data, 'skull', 'V4_inVesSkCT_r025s05_r025_PV_down_up_head_U_010_midaV4s05.nii.gz')
 
     if 'mida1' in modelname:
         flab = os.path.join(siam_data, 'mida', 'csf_veine_r025s05_mida_new_std_v4_cor_csf.nii.gz')
     if 'mida2' in modelname:
-        flab = os.path.join(siam_data, 'mida', 'csf_veine_r025s05_mida_new_std_v4_cor_csf.nii.gz')
+        flab = os.path.join(siam_data, 'mida', 'csf_veine_r025s05_crop_suj12Ven_mida_in_suj12.nii.gz')
 
     if 'allen' in modelname:
         flab = os.path.join(siam_data,'AllenB','r025noS_region_Allen.nii.gz')
         subregions_lab_list = ['WM','cerGM','Hippo','Amyg','dGM1','dGM2','dGM3','dGM5','_GM', 'ventricle']
         dir_subregion = os.path.join(siam_data,'AllenB','subregion')
+    if flab is None:
+        raise('error  modelname (ie sujname) must be on of vasc1 to vasc4 skull1 to skull5 mida1/mida2 allen' )
 
     (dic_map_tissue, dic_map_target, label_dic, label_dic_all,
      preprocessing_target_map_name, preprocessing_target_map_to_synth) = get_target_remaping(modelname)
 
-    return_dict = {"file_lab":flab, "subregion_dir":dir_subregion, "subregion_regex": subregions_lab_list,
+    label_img  = tio.LabelMap(flab)
+    if preprocessing_target_map_name is not None:
+        # Special case vascular, where initial volume has left and right GM with value 1 and 2
+        # so we remap label 2 to 1, to have like other only one GM label
+        if "GM" not in preprocessing_target_map_name:
+            tmap = tio.RemapLabels({preprocessing_target_map_name['lGM']: 1, preprocessing_target_map_name["rGM"]: 1})
+            label_img = tmap(label_img)  # Concatenate left and right GM
+            preprocessing_target_map_name["GM"] = 1
+
+
+    return_dict = {"file_lab":flab, "tio_label": label_img,
+                   "subregion_dir":dir_subregion, "subregion_regex": subregions_lab_list,
                    "dic_map_tissue":dic_map_tissue, "dic_map_target" :dic_map_target,
                    "label_name_tissue": label_dic, "label_name_all": label_dic_all,
                    "initial_label_name":preprocessing_target_map_name,
@@ -505,6 +528,7 @@ def add_subregions_labels(
     out_put_label_image = torch.zeros_like(label_image.data)
     target_not_in_subregion = list(preprocessing_target_map.keys())
 
+    new_name_map = {} #for checking purpose, should end up with the same as
     for lab in add_subregions_lab:
         print(f"Processing subregion  {lab}")
         # File matching between parcel nii and parcel csv
@@ -524,12 +548,14 @@ def add_subregions_labels(
         df_add = pd.read_csv(csv_path)
 
         # Resolve target IDs and source IDs
-        target_ids = {name_map_current[name] for name in df_add[name_col]}
-        source_ids = {preprocessing_target_map[target_key] for target_key in target_ids}
+        #WARNING silent bug set do not preserve order use list instead
+        #target_ids = {name_map_current[name] for name in df_add[name_col]}
+        target_ids = [name_map_current[name] for name in df_add[name_col]]
+        source_ids = [preprocessing_target_map[target_key] for target_key in target_ids]
         for target_key in target_ids:
             target_not_in_subregion.remove(target_key)
 
-        mask_add = torch.isin(label_image.data, torch.tensor(list(source_ids), device=label_image.data.device))
+        mask_add = torch.isin(label_image.data, torch.tensor(source_ids, device=label_image.data.device))
 
         # Check if the mask is empty
         if not torch.any(mask_add):
@@ -539,6 +565,13 @@ def add_subregions_labels(
 
         # Remap the label map to target IDs
         dict_remap = dict(zip(df_add[label_col], target_ids))
+        RRR=False
+        if RRR:
+            dd = sorted(dict_remap.items(), key=lambda item: item[1])
+        dic_name_add = dict(zip(df_add[label_col],df_add[name_col] ))
+        for k,v in dict_remap.items():
+            new_name_map[ dic_name_add[k] ] = v
+
         label_map_image = tio.RemapLabels(dict_remap)(label_to_add_image)
 
         if torch.all(label_map_image.data[mask_add] == 0):
@@ -584,77 +617,82 @@ def add_subregions_labels(
         print(f"WARNING  Non-continuous labels after adding subregions: {torch.unique(out_put_label_image.data)}")
 
     label_image.set_data(out_put_label_image)
-    return label_image
+    return label_image, new_name_map
 
 if __name__ == '__main__':
 
+    dirout = '/network/iss/cenir/analyse/irm/users/romain.valabregue/PVsynth/training_saved_sample/SynthGenerator/v4.2/gen_data_no_augmentation/'
+    nb_contrast = 70
+    save_high_res = False
+    do_morpho = False
 
-    for suj in ['vasc1', 'allen','skull3','mida1']: #
-        print(suj)
-        break
+    suj_list = get_all_possible_suj();
+    suj_list.pop(-1); suj_list.append(suj_list[-1]);suj_list.append(suj_list[-1])
 
-    siamdic = get_siam_data(suj)
-    label_img = tio.LabelMap(siamdic['file_lab'])
+    for sujname in suj_list: #
+        print(sujname)
 
-    if siamdic['initial_label_name'] is not None:
-        # Special case vascular, where initial volume has left and right GM with value 1 and 2
-        # so we remap label 2 to 1, to have like other only one GM label
-        if "GM" not in siamdic['initial_label_name']:
-            tmap = tio.RemapLabels({siamdic['initial_label_name']['lGM']: 1, siamdic['initial_label_name']["rGM"]: 1})
-            label_img = tmap(label_img)  # Concatenate left and right GM
-            siamdic['initial_label_name']["GM"] = 1
+        siamdic = get_siam_data(sujname)
 
+        label_img = siamdic['tio_label'] #tio.LabelMap(siamdic['file_lab'])
+        dir_subregion, subregions_lab_list = siamdic['subregion_dir'], siamdic['subregion_regex']
+        label_ini, label_dic_all = siamdic['initial_label_name'], siamdic['label_name_all']
+        dic_map_tissue, dic_map_target, dic_map_region  = siamdic['dic_map_tissue'], siamdic['dic_map_target'], siamdic['dic_map_region']
 
-    dir_subregion, subregions_lab_list = siamdic['subregion_dir'], siamdic['subregion_regex']
-    label_ini, label_dic_all = siamdic['initial_label_name'], siamdic['label_name_all']
-    dic_map_tissue, dic_map_target, dic_map_region  = siamdic['dic_map_tissue'], siamdic['dic_map_target'], siamdic['dic_map_region']
+        if do_morpho:
+            #here we perform first global GM dilation befor to insert subregions
+            tdillWM = RandomMorphologyTransform(label_to_dilate=[label_ini['WM']], label_within=[label_ini['GM']],
+                                              nb_iter_max=5, nb_iter_min=4, transform_suffix="erodGM",
+                                               label_within_delete=[label_ini['CSF']])
+            # with the param "label_within_delete" all GM is replace by CSF, and new one is construct from dillate WM
+            # without "label_within_delete" argument to have a simple dillation
 
-    do_morpho=False
-    if do_morpho:
-        #here we perform first global GM dilation befor to insert subregions
-        tdillWM = RandomMorphologyTransform(label_to_dilate=[label_ini['WM']], label_within=[label_ini['GM']],
-                                          nb_iter_max=5, nb_iter_min=4, transform_suffix="erodGM",
-                                           label_within_delete=[label_ini['CSF']])
-        # with the param "label_within_delete" all GM is replace by CSF, and new one is construct from dillate WM
-        # without "label_within_delete" argument to have a simple dillation
+            label_img = tdillWM(label_img)
 
-        label_img_dill = tdillWM(label_img)
-
-        il_all_region = add_subregions_labels(dir_subregion,subregions_lab_list,label_img_dill,
-                                              label_dic_all, dic_map_region)
-        il_all_region.save(f'si_{suj}_all_region_WM4.nii.gz')
-        il_tissue = tio.RemapLabels(dic_map_tissue)(il_all_region)
-        il_tissue.save(f'si_{suj}_tissueWM4.nii.gz')
-
-    else:
         if dir_subregion is not None:
-            il_all_region = add_subregions_labels(dir_subregion, subregions_lab_list, label_img,
+            il_all_region, new_dic = add_subregions_labels(dir_subregion, subregions_lab_list, label_img,
                                                   label_dic_all, dic_map_region)
-            il_all_region.save(f'si_{suj}_all_region.nii.gz')
-            il_tissue = tio.RemapLabels(dic_map_tissue)(il_all_region)
-            il_tissue.save(f'si_{suj}_tissue.nii.gz')
-        else :
-            label_img.save(f'si_{suj}_all_region.nii.gz')
+            label_img = il_all_region
+
+        #save different remaps
+        if save_high_res:
+            label_img.save(f'{dirout}/si_{sujname}_all_region.nii.gz')
             il_tissue = tio.RemapLabels(dic_map_tissue)(label_img)
-            il_tissue.save(f'si_{suj}_tissue.nii.gz')
+            il_tissue.save(f'{dirout}/si_{sujname}_tissue.nii.gz')
+            il_target = tio.RemapLabels(dic_map_target)(label_img)
+            il_target.save(f'{dirout}/si_{sujname}_target.nii.gz')
+
+        #last step, from 0.25 mm to lower resolution with partial volume estimation
+        nb_pool=3 # to achieve 3*0.25 mm resolution
+        label_bin, label_4d = pool_remap(label_img, pooling_size=nb_pool, ensure_multiple=nb_pool*2)
+        label_bin.save(f'{dirout}/r075_{sujname}_all_region.nii.gz')
+
+        label_bin_target = tio.RemapLabels(dic_map_target)(label_bin)
+        label_bin_target.save(f'{dirout}/r075_{sujname}_target.nii.gz')
+
+        # lastest  torchio version do not support 4D label remaping, you need to use my fork
+        # here : https://github.com/romainVala/torchio which is a modified fork from torchio 0.19.1
+        label_4d_tissu = tio.RemapLabels(dic_map_tissue)(label_4d)
+        label_4d_tissu.save(f'{dirout}/r075_{sujname}_4D_PVtissue.nii.gz')
+        #alternatively you can avoid the 4D remaping by remapping first the highres all_labels and then do the maxpooling
+        label_bin_tissu, label_4D_tissu = pool_remap(il_tissue, pooling_size=nb_pool, ensure_multiple=nb_pool*2)
 
 
-    #alternatively you can perform dillation on the full roi targeting specific GM regions
-    # the label need to be adapt for each dataset
-    tdill = RandomMorphologyTransform(label_to_dilate=[1], label_within=[90,91,92,93,94,95,96,97],
-                                      nb_iter_max=4, nb_iter_min=3, transform_suffix="erodGM")
-    il_all_region_morphoLocal = tdill(il_all_region)
-    #then again you can transform to tissue and saved
+        suj = tio.Subject(label=label_4d_tissu)
+        timg = tio.RandomLabelsToImage(label_key='label',default_mean=[0,1], default_std = [0.001, 0.01])
+        #std reduce of factor 10 to better see the partial volume but I add a global RandomNoise with std [0.01, 0.1]
 
-    #last step, from 0.25 mm to lower resolution with partial volume estimation
-    nb_pool=3 # to achieve 3*0.25 mm resolution
-    label_bin, label_4d = pool_remap(il_all_region, pooling_size=nb_pool, ensure_multiple=nb_pool*2)
-    label_4d_tissu = tio.RemapLabels(dic_map_tissue)(label_4d)
+        for i in range(nb_contrast):
+            sujo = timg (suj)
+            sujo.image_from_labels.save(f'{dirout}/r075_{sujname}_Sim{i:03}.nii.gz')
 
-    suj = tio.Subject(label=label_4d_tissu)
-    timg = tio.RandomLabelsToImage(label_key='label')
-    for i in range(5):
-        sujo = timg (suj)
-        sujo.image_from_labels.save(f'r075_sim{i}_vasc.nii.gz')
+    if do_morpho:
+        #alternatively you can perform dillation on the full roi targeting specific GM regions
+        # the label need to be adapt for each dataset
+        tdill = RandomMorphologyTransform(label_to_dilate=[1], label_within=[90,91,92,93,94,95,96,97],
+                                          nb_iter_max=4, nb_iter_min=3, transform_suffix="erodGM")
+        il_all_region_morphoLocal = tdill(il_all_region)
+        #then again you can transform to tissue and saved
+
 
 
